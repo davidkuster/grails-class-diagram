@@ -9,6 +9,8 @@ import grails.util.Holders
  */
 class ClassDiagramService {
 
+    def grailsApplication
+
 	def config = Holders.config
     static transactional = false
 
@@ -27,6 +29,12 @@ class ClassDiagramService {
 
         domainClasses = randomizeOrder(domainClasses, prefs)
         domainClasses = classSelection(domainClasses, prefs)
+
+        def excludeDomains = excludeSelection(grailsApplication.domainClasses, prefs)
+        println "excludeDomains = $excludeDomains"
+        println "domainClasses = $domainClasses"
+        domainClasses -= excludeDomains
+        println "post exclude = $domainClasses"
 
         def dotBuilder = new DotBuilder()
         dotBuilder.digraph {
@@ -71,7 +79,7 @@ class ClassDiagramService {
                 }
             }
 
-            buildRelations(dotBuilder, domainClasses, prefs)
+            buildRelations(dotBuilder, domainClasses, excludeDomains, prefs)
         }
         dotBuilder
     }
@@ -146,12 +154,15 @@ class ClassDiagramService {
 
     }
 
-    private void buildRelations(dotBuilder, domainClasses, prefs) {
+    private void buildRelations(dotBuilder, domainClasses, excludeDomains, prefs) {
         def cfg = config.classDiagram.associations
+
+        println "building relations on domain domainClasses $domainClasses"
+        println "excluding $excludeDomains"
 
         domainClasses.each { domainClass ->
             // build associations
-            getInterestingAssociations(domainClass, prefs).each { ass ->
+            getInterestingAssociations(domainClass, excludeDomains, prefs).each { ass ->
                 dotBuilder.from(domainClass.name).to(ass.referencedDomainClass?.name ?: ass.type.simpleName, getAssociationProps(ass, prefs))
             }
             // build inheritance
@@ -188,6 +199,24 @@ class ClassDiagramService {
         } else {
             matchDomainsByName(domainClasses, prefs.classSelection)
         }
+    }
+
+    /**
+     *
+     */
+    private Collection excludeSelection(domainClasses, prefs) {
+        def classesToExclude = []
+        if (prefs.classExcludeSelection) {
+            println "exclude selection = ${prefs.classExcludeSelection}"
+            if (prefs.classExcludeSelectionIsRegexp) {
+                classesToExclude = matchDomainsByRegexp(domainClasses, prefs.classExcludeSelection)
+                println "exclude = ${classesToExclude} from domains ${domainClasses}"
+            }
+            else {
+                classesToExclude = matchDomainsByName(domainClasses, prefs.classExcludeSelection)
+            }
+        }
+        classesToExclude
     }
 
     /**
@@ -337,13 +366,15 @@ class ClassDiagramService {
         }
     }
 
-    private getInterestingAssociations(GrailsDomainClass domainClass, prefs) {
+    private getInterestingAssociations(GrailsDomainClass domainClass, excludeDomains, prefs) {
         domainClass.properties.findAll { prop ->
+            println "ref = ${prop.referencedDomainClass}"
             (prop.association || prop.enum) && // All associations and enums
             !(prop.embedded && prefs.showEmbeddedAsProperty) && // except embedded if not configured so
             !(prop.enum && prefs.showEnumAsProperty) && // except enums if not configured so
             !prop.inherited && // except inherited stuff
-            !(prop.bidirectional && domainClass.name > prop.referencedDomainClass.name) // bidirectionals should only be mapped once
+            !(prop.bidirectional && domainClass.name > prop.referencedDomainClass.name) && // bidirectionals should only be mapped once
+            !(prop.referencedDomainClass in excludeDomains)
         }
     }
 

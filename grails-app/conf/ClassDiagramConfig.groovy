@@ -23,7 +23,7 @@ classDiagram {
             autoUpdate = true
             classSelection = "<all>"
             classSelectionIsRegexp = false
-            //classExcludeSelection = null
+            classExcludeSelection = "<none>"
             classExcludeSelectionIsRegexp = false
             graphOrientation = "TB" // See http://www.graphviz.org/doc/info/attrs.html#k:rankdir for valid values
             fontsize = 9

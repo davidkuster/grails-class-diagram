@@ -112,7 +112,7 @@ class ClassDiagramPreferences {
 
     String classSelection = defaults.classSelection
     String classSelectionIsRegexp = defaults.classSelectionIsRegexp
-    String classExcludeSelection //= defaults.classExcludeSelection
+    String classExcludeSelection = defaults.classExcludeSelection
     String classExcludeSelectionIsRegexp = defaults.classExcludeSelectionIsRegexp
 
     def classNamesToShow = []
