@@ -11,20 +11,20 @@ class ClassDiagramService {
 
 	def config = Holders.config
     static transactional = false
-	
+
     // TO deal with the issue to know the Grails 's injected methods,
     // we list here the commonsMethod between Grails domain class, supposed to be injected.
     // commonsMethods is populated in buildDomainClasses()
 	List commonsMethods = new ArrayList()
-	
+
     byte[] createDiagram(domainClasses, prefs) {
         def dotBuilder = createDotDiagram(domainClasses, prefs)
         dotBuilder.createDiagram(prefs.outputFormat?:"png")
     }
-    
+
     DotBuilder createDotDiagram(domainClasses, prefs) {
         def skin = config.classDiagram.skins?."${prefs.skin}"
-        
+
         domainClasses = randomizeOrder(domainClasses, prefs)
         domainClasses = classSelection(domainClasses, prefs)
 
@@ -42,7 +42,7 @@ class ClassDiagramService {
                 buildEnumClasses(dotBuilder, enumClasses, prefs)
 
             } else { // build domain classes per package
-                
+
                 def allPackageNames = domainClasses.collect {getPackageName(it)} as Set
                 if (!prefs.showEmbeddedAsProperty) {
                     // embedded classes may exist in other packages than domain classes
@@ -52,7 +52,7 @@ class ClassDiagramService {
                     // enum classes may exist in other packages than domain classes
                     allPackageNames += enumClasses.collect {getPackageName(it)}.unique()
                 }
-                
+
                 allPackageNames = randomizeOrder(allPackageNames, prefs)
 
                 allPackageNames.each { packageName ->
@@ -75,7 +75,7 @@ class ClassDiagramService {
         }
         dotBuilder
     }
-    
+
     private void buildGraphDefaults(dotBuilder, skin, prefs) {
         dotBuilder.graph (skin.graphStyle)
         dotBuilder.node ([shape:"record"] + [fontsize:prefs.fontsize] + skin.nodeStyle)
@@ -83,14 +83,14 @@ class ClassDiagramService {
     }
 
     private String getPackageName(cls) {
-        // Name of root package is inconsistent  
+        // Name of root package is inconsistent
         if (cls instanceof GrailsDomainClass) {
             cls.packageName == "" ? "<root>" : cls.packageName
         } else {
             cls.package?.name ?: "<root>"
         }
     }
-    
+
     private void buildEmbeddedClasses(dotBuilder, embeddedClasses, prefs) {
         if (!prefs.showEmbeddedAsProperty) {
             embeddedClasses.each { embeddedClass ->
@@ -108,28 +108,28 @@ class ClassDiagramService {
     }
 
     private void buildDomainClasses(dotBuilder, domainClasses, prefs) {
-		
+
         // TO deal with the issue to know the Grails 's injected methods,
         // we list commonsMethod between Grails domain class, supposed to be injected.
-        
-    	// We start to list all methods from the first domain class, and then remove
-    	// all distinct methods from other domains. At the end, we suppose to have injected, 
-    	// or at last common to all domain 
 
-    	
+    	// We start to list all methods from the first domain class, and then remove
+    	// all distinct methods from other domains. At the end, we suppose to have injected,
+    	// or at last common to all domain
+
+
 		if(prefs?.showMethods) {
 			List tmpCommonsMethods = new ArrayList()
 			domainClasses.each { domainClass ->
 				if(domainClass == domainClasses.first()) {
 					// First element
 					domainClass.clazz.declaredMethods.findAll().each {
-						commonsMethods.push(it.name) 
-						
+						commonsMethods.push(it.name)
+
 					}
-				 } else 
+				 } else
 			 	 {
 					  tmpCommonsMethods = new ArrayList()
-					  domainClass.clazz.declaredMethods.findAll().each { 
+					  domainClass.clazz.declaredMethods.findAll().each {
 						  if(commonsMethods.contains(it.name)) {
 							  tmpCommonsMethods.push(it.name)
 						  }
@@ -145,7 +145,7 @@ class ClassDiagramService {
 		}
 
     }
-    
+
     private void buildRelations(dotBuilder, domainClasses, prefs) {
         def cfg = config.classDiagram.associations
 
@@ -154,15 +154,15 @@ class ClassDiagramService {
             getInterestingAssociations(domainClass, prefs).each { ass ->
                 dotBuilder.from(domainClass.name).to(ass.referencedDomainClass?.name ?: ass.type.simpleName, getAssociationProps(ass, prefs))
             }
-            // build inheritance 
+            // build inheritance
             domainClass.subClasses.each { subClass ->
-                if (subClass.clazz.superclass == domainClass.clazz) { // GRAILSPLUGINS-1740: domainClass.subClasses also returns all sub-sub-classes! 
+                if (subClass.clazz.superclass == domainClass.clazz) { // GRAILSPLUGINS-1740: domainClass.subClasses also returns all sub-sub-classes!
                     dotBuilder.from(domainClass.name).to(subClass.name, [arrowhead:cfg.arrows.none, arrowtail:cfg.arrows.inherits, dir:'both'])
                 }
-            }                
+            }
         }
     }
-    
+
     /**
      * Order package names according to preferences
      */
@@ -184,48 +184,62 @@ class ClassDiagramService {
             return domainClasses
         }
         if (prefs.classSelectionIsRegexp) {
-            def classSelectionPattern = Pattern.compile(addRegexpWildcardsWhereNeeded(prefs.classSelection))
-            domainClasses.findAll { cls ->
-                String fullName = cls.packageName + "." + cls.name
-                fullName ==~ classSelectionPattern
-            }
+            matchDomainsByRegexp(domainClasses, prefs.classSelection)
         } else {
-            domainClasses.findAll { cls ->
-                String fullName = cls.packageName + "." + cls.name
-                fullName.indexOf(stripWildcardsOnEnds(prefs.classSelection)) >= 0
-            }
+            matchDomainsByName(domainClasses, prefs.classSelection)
         }
     }
 
     /**
-     * strip preceeding and succeeding wildcards (*) from string 
+     * finds domains that match a given regular expression
      */
-     String stripWildcardsOnEnds(String s) {
-         if (s.startsWith('*')) {
-             s = s[1..-1]
-         }
-         if (s.endsWith('*')) {
-             s = s[0..-2]
-         }
-         s
-     }
+    private Collection matchDomainsByRegexp(domains, regexp) {
+        def pattern = Pattern.compile(addRegexpWildcardsWhereNeeded(regexp))
+        domains.findAll { cls ->
+            String fullName = cls.packageName + "." + cls.name
+            fullName ==~ pattern
+        }
+    }
+
+    /**
+     * finds domains that match a given string
+     */
+    private Collection matchDomainsByName(domains, name) {
+        domains.findAll { cls ->
+            String fullName = cls.packageName + "." + cls.name
+            fullName.indexOf(stripWildcardsOnEnds(name)) >= 0
+        }
+    }
+
+    /**
+     * strip preceeding and succeeding wildcards (*) from string
+     */
+    private String stripWildcardsOnEnds(String s) {
+        if (s.startsWith('*')) {
+            s = s[1..-1]
+        }
+        if (s.endsWith('*')) {
+            s = s[0..-2]
+        }
+        s
+    }
 
      /**
       * Add regexp wildcards (.*) before and after s, and before and after every '|' (regexp or).
       */
-      String addRegexpWildcardsWhereNeeded(String s) {
-          s.tokenize('|').collect {
-              def sb = new StringBuilder()
-              if (!it.startsWith('.*')) {
-                  sb.append(".*")
-              }
-              sb.append(it)
-              if (!it.endsWith('.*')) {
-                  sb.append(".*")
-              }
-              sb.toString()
-          }.join('|')
-      }
+    private String addRegexpWildcardsWhereNeeded(String s) {
+        s.tokenize('|').collect {
+            def sb = new StringBuilder()
+            if (!it.startsWith('.*')) {
+                sb.append(".*")
+            }
+            sb.append(it)
+            if (!it.endsWith('.*')) {
+                sb.append(".*")
+            }
+            sb.toString()
+        }.join('|')
+    }
 
     /**
      * @return the dot properties for the given association (which is a domainClass.property)
@@ -239,7 +253,7 @@ class ClassDiagramService {
         def label = prefs?.showAssociationNames ? ass.bidirectional ? ass.otherSide.name + " / " + ass.name : ass.name : ""
         [label:label, arrowhead:arrowhead, arrowtail:arrowtail, headlabel:headlabel, taillabel:taillabel, dir:'both']
     }
-        
+
     /**
      * @return Node label containing class name, properties, methods, and dividers
      */
@@ -253,10 +267,10 @@ class ClassDiagramService {
 
     private String formatProperties(cls, prefs) {
         if (prefs?.showProperties) {
-            def label = "|" 
+            def label = "|"
             if (cls instanceof Class && cls.enum) {
                 label += getInterestingProperties(cls, prefs).collect {formatEnumProperty(it, prefs)}.join("\\l")
-            } else { 
+            } else {
                 label += getInterestingProperties(cls, prefs).collect {formatProperty(it, prefs)}.join("\\l")
             }
             label += "\\l" // get weird formatting without this one
@@ -265,7 +279,7 @@ class ClassDiagramService {
             ""
         }
     }
-    
+
     private String formatProperty(property, prefs) {
         if (prefs.showPropertyType) {
             property.type.simpleName+" "+property.name
@@ -281,10 +295,10 @@ class ClassDiagramService {
             property.name
         }
     }
-    
+
     private String formatMethods(cls, prefs) {
         if (prefs?.showMethods) {
-            def label = "|" 
+            def label = "|"
             label += getInterestingMethods(cls, prefs).collect {formatMethod(it, prefs)}.join("\\l")
             label += "\\l"
             return label
@@ -292,7 +306,7 @@ class ClassDiagramService {
             ""
         }
     }
-    
+
     private String formatMethod(method, prefs) {
         def returnType = prefs.showMethodReturnType ? method.returnType.simpleName + " " : ""
         def methodSignature = prefs.showMethodSignature ? method.parameterTypes.collect{it.simpleName}.join(',') : ""
@@ -302,22 +316,22 @@ class ClassDiagramService {
     private getInterestingProperties(cls, prefs) {
         if (cls instanceof GrailsDomainClass) {
             cls.properties.findAll { prop ->
-                !(prop.name in ["id","version"]) && 
+                !(prop.name in ["id","version"]) &&
                 (!prop.association || (prop.embedded && prefs.showEmbeddedAsProperty)) &&
                 (!(prop.enum && !prefs.showEnumAsProperty)) &&
                 (!prop.inherited)
             }
         } else if (cls.enum) {
             cls.declaredFields.findAll { field ->
-                !field.name.startsWith("\$") && 
-                !field.name.startsWith("__") && 
+                !field.name.startsWith("\$") &&
+                !field.name.startsWith("__") &&
                 !(field.name in ["metaClass", "MAX_VALUE", "MIN_VALUE"]) &&
-                !field.name.startsWith("array\$\$") 
+                !field.name.startsWith("array\$\$")
             }
         } else { // Assume regular java class
             cls.declaredFields.findAll { field ->
-                !field.name.startsWith("\$") && 
-                !field.name.startsWith("__") && 
+                !field.name.startsWith("\$") &&
+                !field.name.startsWith("__") &&
                 !(field.name in ["metaClass"])
             }
         }
@@ -329,7 +343,7 @@ class ClassDiagramService {
             !(prop.embedded && prefs.showEmbeddedAsProperty) && // except embedded if not configured so
             !(prop.enum && prefs.showEnumAsProperty) && // except enums if not configured so
             !prop.inherited && // except inherited stuff
-            !(prop.bidirectional && domainClass.name > prop.referencedDomainClass.name) // bidirectionals should only be mapped once  
+            !(prop.bidirectional && domainClass.name > prop.referencedDomainClass.name) // bidirectionals should only be mapped once
         }
     }
 
@@ -342,9 +356,9 @@ class ClassDiagramService {
         if (cls instanceof GrailsDomainClass) {
             def methods = cls.clazz.declaredMethods
             def propertyNames = cls.properties*.name
-            propertyNames += ["id","version", "hasMany", "belongsTo", "mappedBy", "mapping", "constraints", "embedded"] 
+            propertyNames += ["id","version", "hasMany", "belongsTo", "mappedBy", "mapping", "constraints", "embedded"]
             getDeclaredMethods(methods, propertyNames)
-        } else if (cls.enum) { 
+        } else if (cls.enum) {
             def methods = cls.declaredMethods
             methods -= methods.findAll { it.name in ["valueOf", "values", "next", "previous"]} // Removed even if overridden
             def propertyNames = cls.declaredFields*.name
@@ -355,29 +369,29 @@ class ClassDiagramService {
             getDeclaredMethods(methods, propertyNames)
         }
     }
-    
+
     /**
      * Get methods declared in a class, filtering out all inherited and meta-added stuff.
      * Quite a few assumptions are made, no satisfactory solution found. Hack!
-     * The Class.getDeclaredMethods() also includes decorated methods, which makes it essentially useless. 
-     * I think we need a grails getUndecoratedDeclaredMethods() that gives us what we really coded in the class, if that is possible. 
+     * The Class.getDeclaredMethods() also includes decorated methods, which makes it essentially useless.
+     * I think we need a grails getUndecoratedDeclaredMethods() that gives us what we really coded in the class, if that is possible.
      */
     private getDeclaredMethods(methods, propertyNames) {
-        def filterMethods = methods.findAll { it.name =~ /\$/} // remove special methods containing $ 
+        def filterMethods = methods.findAll { it.name =~ /\$/} // remove special methods containing $
         filterMethods += GroovyObject.methods.flatten() // remove metaClass, properties etc.
-        filterMethods += Object.methods.flatten() // remove toString 
-		
+        filterMethods += Object.methods.flatten() // remove toString
+
 		commonsMethods.each { methodtoremove ->
 			filterMethods += methods.findAll {it.name =~ methodtoremove}
 		}
-		
+
 
         // filter out property-related methods
         methods.each { method ->
             ["get","is","set","addTo","removeFrom"].each { prefix ->
                 propertyNames.each{ propertyName ->
                     if (method.name == prefix+initCap(propertyName)) {
-                        // TODO: Filter by signature, not just name 
+                        // TODO: Filter by signature, not just name
                         filterMethods += method
                     }
                 }
@@ -391,14 +405,14 @@ class ClassDiagramService {
 
         return methods
     }
-    
-    // There may be a String method for this, but I didnt find it :) 
+
+    // There may be a String method for this, but I didnt find it :)
     private initCap(String s) {
         s ? s[0].toUpperCase() + (s.size() > 1 ? s[1..-1] : '') : s
     }
-    
+
     /**
-     * @returns true if the methods has the same signature, without looking at the class name. 
+     * @returns true if the methods has the same signature, without looking at the class name.
      */
     private boolean hasSameSignature(method1, method2)  {
         if (method1?.name != method2?.name) {
@@ -408,6 +422,6 @@ class ClassDiagramService {
             return false
         }
         return method1.returnType == method2.returnType
-    }        
-    
+    }
+
 }

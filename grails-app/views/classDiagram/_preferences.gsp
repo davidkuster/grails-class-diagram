@@ -18,7 +18,7 @@
                     </li>
                 </ol>
             </fieldset>
-            
+
             <fieldset id="show_fields" class="">
                 <label for="show_fields_inner">Show:</label>
                 <fieldset id="show_fields_inner" class="">
@@ -88,7 +88,7 @@
                     </ol>
                 </fieldset>
             </fieldset>
-            
+
             <fieldset id="class_selection" class="">
                 <ol>
                     <li title="Select a subset of classes by entering part of a class and/or package name. Ex. 'com.my.subdomain', '[Oo]rder', 'Foo|Bar'. Note: leading an trailing wildcards is not needed. Works on domain classes only. See http://java.sun.com/j2se/1.4.2/docs/api/java/util/regex/Pattern.html for regexp spec. ">
@@ -97,9 +97,16 @@
                         <g:checkBox name="classSelectionIsRegexp" value="${prefs.classSelectionIsRegexp}" ></g:checkBox>
                         Regexp
                     </li>
+
+                    <li title="Select a subset of classes by entering part of a class and/or package name. Ex. 'com.my.subdomain', '[Oo]rder', 'Foo|Bar'. Note: leading an trailing wildcards is not needed. Works on domain classes only. See http://java.sun.com/j2se/1.4.2/docs/api/java/util/regex/Pattern.html for regexp spec. ">
+                        <label for="classExcludeSelection">Classes to Exclude:</label>
+                        <input type="text" id="classExcludeSelection" name="classExcludeSelection" value="${fieldValue(bean:prefs,field:'classExcludeSelection')}"/>
+                        <g:checkBox name="classExcludeSelectionIsRegexp" value="${prefs.classExcludeSelectionIsRegexp}" ></g:checkBox>
+                        Regexp
+                    </li>
                 </ol>
             </fieldset>
-            
+
             <fieldset id="misc_fields" class="">
                 <ol>
                     <li title="Changes the size of the underlying model image. Note: Will not have any effect if your skin has hardcoded fontsize.">

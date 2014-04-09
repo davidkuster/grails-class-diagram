@@ -14,18 +14,18 @@ class ClassDiagramController {
     def classDiagramLegendService
 	def grailsApplication
 
-    def index = { 
+    def index = {
         redirect action:'show'
     }
 
     def show = { ClassDiagramPreferences prefs ->
         bindData(prefs, params)
-        
+
         def skins = [:] // skin as [name:description] makes client easier
         grailsApplication.config.classDiagram.skins.each {
             skins.put(it.key, it.value.name)
         }
-        def graphOrientations = ["TB":"Top to Bottom", "LR": "Left to Right", "BT": "Bottom to Top", "RL": "Right to Left"] 
+        def graphOrientations = ["TB":"Top to Bottom", "LR": "Left to Right", "BT": "Bottom to Top", "RL": "Right to Left"]
         [prefs:prefs, skins:skins, graphOrientations: graphOrientations]
     }
 
@@ -47,9 +47,9 @@ class ClassDiagramController {
             response.contentType = mimeTypeFor(prefs.outputFormat?:"png")
             response.outputStream << image
         } else {
-            render "Something went wrong during class diagram generation. Check the output format!" 
+            render "Something went wrong during class diagram generation. Check the output format!"
         }
-    }    
+    }
 
     def legend = { ClassDiagramPreferences prefs ->
         def image = classDiagramLegendService.createLegend()
@@ -62,7 +62,7 @@ class ClassDiagramController {
             render "Something went wrong during legend generation"
         }
     }
-    
+
     // TODO many weird libs have some ContentType class that does this, but we should instead be able to tap into grails mime types!
     // See for instance http://www.rgagnon.com/javadetails/java-0487.html
     static final MIME_TYPE = [
@@ -94,10 +94,10 @@ class ClassDiagramController {
  * Preferences for class diagram. Used as a Command Object for this controller.
  */
 class ClassDiagramPreferences {
-	
-    static def defaults = Holders.config.classDiagram.preferences.defaults 
-	
-    
+
+    static def defaults = Holders.config.classDiagram.preferences.defaults
+
+
     String outputFormat = defaults.outputFormat
 
     boolean showProperties = defaults.showProperties
@@ -112,28 +112,30 @@ class ClassDiagramPreferences {
 
     String classSelection = defaults.classSelection
     String classSelectionIsRegexp = defaults.classSelectionIsRegexp
-    
+    String classExcludeSelection //= defaults.classExcludeSelection
+    String classExcludeSelectionIsRegexp = defaults.classExcludeSelectionIsRegexp
+
     def classNamesToShow = []
 
     String skin = defaults.skin
-    
+
     int fontsize = 10 //getSkinProperty("node","fontsize", grailsApplication.config.classDiagram.preferences.defaults.fontsize)
-    
+
     boolean autoUpdate = defaults.autoUpdate
     String graphOrientation = defaults.graphOrientation
 
     boolean randomizeOrder = false
-    int random 
-    
-    // Find properties on skin 
+    int random
+
+    // Find properties on skin
     def getSkinProperty(skinPart, propertyName, defaultValue) {
         grailsApplication.config.classDiagram.skins."${skin}"."${skinPart}Style"["${propertyName}"] ?:
         grailsApplication.config.classDiagram.skins."${skin}"."graphStyle"["${propertyName}"] ?:
         defaultValue
     }
-    
+
     // Groovy bug? If we define method as isVertical..., it will not be part of this class's properties collection
-    def getVerticalOrientation() { 
+    def getVerticalOrientation() {
         graphOrientation in ["TB","BT"]
     }
 }

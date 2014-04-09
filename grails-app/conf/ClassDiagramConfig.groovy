@@ -23,13 +23,15 @@ classDiagram {
             autoUpdate = true
             classSelection = "<all>"
             classSelectionIsRegexp = false
+            //classExcludeSelection = null
+            classExcludeSelectionIsRegexp = false
             graphOrientation = "TB" // See http://www.graphviz.org/doc/info/attrs.html#k:rankdir for valid values
             fontsize = 9
         }
     }
     associations {
         arrows {
-            // See http://www.graphviz.org/doc/info/arrows.html for available arrowheads and their visual appearance 
+            // See http://www.graphviz.org/doc/info/arrows.html for available arrowheads and their visual appearance
             references = "open"
             belongsTo = "odiamond"
             embedded = "diamond"
