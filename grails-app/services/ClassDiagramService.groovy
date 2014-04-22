@@ -368,7 +368,6 @@ class ClassDiagramService {
 
     private getInterestingAssociations(GrailsDomainClass domainClass, excludeDomains, prefs) {
         domainClass.properties.findAll { prop ->
-            println "ref = ${prop.referencedDomainClass}"
             (prop.association || prop.enum) && // All associations and enums
             !(prop.embedded && prefs.showEmbeddedAsProperty) && // except embedded if not configured so
             !(prop.enum && prefs.showEnumAsProperty) && // except enums if not configured so
