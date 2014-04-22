@@ -14,7 +14,7 @@ The excellent utility graphviz (http://www.graphviz.org/) is used for diagram la
     <resource>ClassDiagramController</resource>
     <resource>ClassDiagramLegendService</resource>
     <resource>ClassDiagramService</resource>
-    <resource>bug.workarround.ParamsLinksTagLib</resource>
+    <resource>ParamsLinksTagLib</resource>
   </resources>
   <repositories>
     <repository name='grailsCentral' url='http://grails.org/plugins' />
