@@ -11,6 +11,7 @@ import grails.util.Holders
 class ClassDiagramController {
 
     def classDiagramService
+    def classDiagramNonDomainService
     def classDiagramLegendService
 	def grailsApplication
 
@@ -42,6 +43,17 @@ class ClassDiagramController {
     // request for image
     def model = { ClassDiagramPreferences prefs ->
         def image = classDiagramService.createDiagram(grailsApplication.domainClasses, prefs)
+        if (image.length > 0) {
+            response.contentLength = image.length
+            response.contentType = mimeTypeFor(prefs.outputFormat?:"png")
+            response.outputStream << image
+        } else {
+            render "Something went wrong during class diagram generation. Check the output format!"
+        }
+    }
+
+    def model2 = { ClassDiagramPreferences prefs ->
+        def image = classDiagramNonDomainService.createDiagram(prefs)
         if (image.length > 0) {
             response.contentLength = image.length
             response.contentType = mimeTypeFor(prefs.outputFormat?:"png")
