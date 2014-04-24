@@ -84,6 +84,13 @@ classDiagram {
             edgeStyle = [color:"gray40", fontname:"Verdana"]
             packageStyle = [style:"filled", color:"gray95", fontname:"Verdana"]
         }
+        white2 {
+            name = "White on White"
+            graphStyle = [bgcolor:"white"]
+            nodeStyle = [style:"filled", color:"gray40", fillcolor:"white", fontname:"Verdana"]
+            edgeStyle = [color:"gray40", fontname:"Verdana"]
+            packageStyle = [bgcolor:"gray90", style:"", color:"gray40", fontname:"Verdana"]
+        }
     }
     legend {
         style {
