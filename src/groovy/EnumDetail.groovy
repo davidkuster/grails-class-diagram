@@ -1,0 +1,4 @@
+
+class EnumDetail extends ClassDetail {
+
+}

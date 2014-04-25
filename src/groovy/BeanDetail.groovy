@@ -1,0 +1,4 @@
+
+class BeanDetail extends ClassDetail {
+
+}

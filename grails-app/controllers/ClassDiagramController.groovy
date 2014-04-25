@@ -12,6 +12,7 @@ class ClassDiagramController {
 
     def classDiagramService
     def classDiagramNonDomainService
+    def classDetailsDiagramService
     def classDiagramLegendService
 	def grailsApplication
 
@@ -51,6 +52,31 @@ class ClassDiagramController {
             render "Something went wrong during class diagram generation. Check the output format!"
         }
     }
+
+
+    /* new approach - make the ClassDetails classes handle the logic in an OO fashion */
+
+    def domainDiagram = { ClassDiagramPreferences prefs ->
+        def classDetails = new DomainDetails(grailsApplication, prefs)
+        renderDiagram(classDetails)
+    }
+
+    def controllerServiceDiagram = { ClassDiagramPreferences prefs ->
+        def classDetails = new ControllerServiceDetails(grailsApplication, prefs)
+        renderDiagram(classDetails)
+    }
+
+    private def renderDiagram(CLassDetails classDetails) {
+        def image = classDetailsDiagramService.createDiagram(classDetails)
+        if (image.length > 0) {
+            response.contentLength = image.length
+            response.contentType = mimeTypeFor(prefs.outputFormat ?: "png")
+            response.outputStream << image
+        } else {
+            render "Something went wrong during class diagram generation. Check the output format!"
+        }
+    }
+
 
     def model2 = { ClassDiagramPreferences prefs ->
         def image = classDiagramNonDomainService.createDiagram(prefs)
