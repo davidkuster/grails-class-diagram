@@ -5,8 +5,8 @@ class ControllerServiceDetails extends ClassDetails {
     ControllerServiceDetails(grailsApplication, ClassDiagramPreferences prefs) {
         super(prefs)
 
-        def allControllers = grailsApplication.controllerClasses
-        def allServices = grailsApplication.serviceClasses
+        def allControllers = grailsApplication.controllerClasses as List
+        def allServices = grailsApplication.serviceClasses as List
         def allControllersAndServices = allControllers + allServices
 
         classesToExclude = excludeSelection(allControllersAndServices)
