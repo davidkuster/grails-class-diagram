@@ -11,4 +11,21 @@ class DomainDetail extends ClassDetail {
   }
 
 
+  List getSubClasses() {
+
+  }
+
+  List getInterestingProperties() {
+
+  }
+
+  List getInterestingMethods() {
+
+  }
+
+  List getInterestingAssociations() {
+
+  }
+
+
 }

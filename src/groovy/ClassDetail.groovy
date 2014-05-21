@@ -3,10 +3,10 @@ abstract class ClassDetail {
 
     abstract String getNodeName()
 
-    abstract List getInterestingAssociations(cls)
-    abstract List getSubClasses(cls)
-    abstract List getInterestingProperties(cls)
-    abstract List getInterestingMethods(cls)
+    abstract List getInterestingAssociations()
+    abstract List getSubClasses()
+    abstract List getInterestingProperties()
+    abstract List getInterestingMethods()
 
     /**
      * Get methods declared in a class, filtering out all inherited and meta-added stuff.

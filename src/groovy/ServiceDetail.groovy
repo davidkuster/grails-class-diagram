@@ -9,4 +9,21 @@ class ServiceDetail extends ClassDetail {
     "${gcc}Service" - "Artefact > "
   }
 
+
+  List getSubClasses() {
+
+  }
+
+  List getInterestingProperties() {
+
+  }
+
+  List getInterestingMethods() {
+
+  }
+
+  List getInterestingAssociations() {
+
+  }
+
 }
