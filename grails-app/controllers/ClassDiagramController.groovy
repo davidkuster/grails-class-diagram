@@ -66,7 +66,7 @@ class ClassDiagramController {
         renderDiagram(classDetails)
     }
 
-    private def renderDiagram(CLassDetails classDetails) {
+    private def renderDiagram(ClassDetails classDetails) {
         def image = classDetailsDiagramService.createDiagram(classDetails)
         if (image.length > 0) {
             response.contentLength = image.length
