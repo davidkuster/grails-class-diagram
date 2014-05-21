@@ -8,7 +8,7 @@ import grails.util.Holders
  * Service that takes classes other than Grails domains (controllers/services probably)
  * and turns them into a domain class diagram.
  */
-class ClassDiagramNonDomainService {
+class ClassDetailsDiagramService {
 
     static transactional = false
 
@@ -84,7 +84,7 @@ class ClassDiagramNonDomainService {
                 || detail instanceof ServiceDetail) {
                 buildArtefactClass(dotBuilder, detail, prefs)
             }
-            else if (detail instanceof EmbeddedDetail) {
+            else if (detail instanceof EmbeddedClassDetail) {
                 buildConfigurableClass(dotBuilder, detail, 'showEmbeddedAsProperty', prefs)
             }
             else if (detail instanceof EnumDetail) {
@@ -115,6 +115,21 @@ class ClassDiagramNonDomainService {
 
         println "building relations on classes $classesToDiagram"
         println "excluding $classesToExclude"
+
+        classesToDiagram.each { detail ->
+            // build associations
+            detail.interestingAssociations?.each { ass ->
+                dotBuilder.from(diagramClass.name).to(
+                    ass.referencedDomainClass?.name ?: ass.type.simpleName,
+                    getAssociationProps(ass, prefs))
+            }
+            // build inheritance
+            detail.subClasses?.each { subClass ->
+                dotBuilder.from(diagramClass.name).to(
+                    subClass.name,
+                    [arrowhead:cfg.arrows.none, arrowtail:cfg.arrows.inherits, dir:'both'])
+            }
+        }
 
         if (classDetails instanceof DomainDetails) {
             classesToDiagram.each { diagramClass ->
